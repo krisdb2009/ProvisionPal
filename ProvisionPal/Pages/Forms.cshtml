@@ -1,0 +1,26 @@
+﻿@page "/Forms"
+@using System.Data.SqlClient
+@model ProvisionPal.Pages.PublicFormModel
+@inject Services.Database DB
+
+@{
+    ViewData["Title"] = "Forms";
+
+    DB.Connection.Open();
+    SqlCommand cmd = DB.Connection.CreateCommand();
+    cmd.CommandText = "SELECT FormID, Name, Description FROM Forms";
+    SqlDataReader reader = cmd.ExecuteReader(); 
+    while(reader.Read())
+    {
+        <component 
+            type="typeof(Shared.Components.Card)"
+            render-mode="Static"
+            param-Title="reader.GetString(1)"
+            param-Description="reader.GetString(2)"
+            param-ButtonText='"OPEN"'
+            param-ButtonHref='"/Form/" + reader.GetGuid(0).ToString()'
+        />
+    }
+    DB.Connection.Close();
+}
+

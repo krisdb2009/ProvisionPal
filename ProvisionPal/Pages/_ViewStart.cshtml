@@ -1,0 +1,10 @@
+﻿@{
+    if(Url.ActionContext.ActionDescriptor.DisplayName.StartsWith("/Form"))
+    {
+        Layout = "Layouts/PublicLayout";
+    }
+    else
+    {
+        Layout = "Layouts/MainLayout";
+    }
+}

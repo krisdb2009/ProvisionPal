@@ -1,0 +1,18 @@
+﻿<div class="card" style="width: 18rem;">
+  <div class="card-body">
+    <h5 class="card-title">@Title</h5>
+    <p class="card-text">@Description</p>
+    <a href="@ButtonHref" class="btn btn-primary">@ButtonText</a>
+  </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; }
+    [Parameter]
+    public string Description { get; set; }
+    [Parameter]
+    public string ButtonText { get; set; }
+    [Parameter]
+    public string ButtonHref { get; set; }
+}
