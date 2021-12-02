@@ -1,0 +1,16 @@
+﻿<div class="input-group">
+    <input type="text" class="form-control" placeholder="@Label" name="@Name" value="@Value">
+</div>
+
+@code {
+    [Parameter]
+    public string Label { get; set; }
+    [Parameter]
+    public string Name { get; set; }
+    [Parameter]
+    public string Value { get; set; }
+    [Parameter]
+    public string Description { get; set; }
+    [Parameter]
+    public string RegularExpression { get; set; }
+}

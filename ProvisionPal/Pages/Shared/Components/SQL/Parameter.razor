@@ -1,0 +1,46 @@
+﻿@using System.Data.SqlClient
+@inject Services.Database DB
+
+@{
+    DB.Connection.Open();
+    SqlCommand cmd = DB.Connection.CreateCommand();
+    cmd.Parameters.AddWithValue("@PARAMID@", ParameterID);
+    cmd.CommandText = "SELECT Name, Description, RegularExpression FROM Parameters WHERE ParameterID = @PARAMID@";
+    SqlDataReader reader =  cmd.ExecuteReader();
+    reader.Read();
+    Name = reader.GetString(0);
+    Description = reader.GetString(1);
+    if (!reader.IsDBNull(2)) RegularExpression = reader.GetString(2);
+    reader.Close();
+    cmd.CommandText = "SELECT Value FROM ParameterXRefMultiSelect WHERE ParameterID = @PARAMID@";
+    reader = cmd.ExecuteReader();
+    while (reader.Read()) MultiSelectValues.Add(reader.GetString(0));
+    DB.Connection.Close();
+}
+
+@if(RegularExpression == "[0|1]")
+{
+    <CheckBox Name="@ParameterID.ToString()" Label="@Name" Description="@Description" Value="@Value"></CheckBox>
+}
+else 
+{
+    @if(MultiSelectValues.Count != 0)
+    {
+        <MultiSelect Name="@ParameterID.ToString()" Label="@Name" Description="@Description" Value="@Value" Values="MultiSelectValues.ToArray()"></MultiSelect>
+    }
+    else
+    {
+        <TextInput Name="@ParameterID.ToString()" Label="@Name" Description="@Description" Value="@Value"></TextInput>
+    }
+}
+
+@code {
+    [Parameter]
+    public Guid ParameterID { get; set; }
+    [Parameter]
+    public string Value { get; set; }
+    private string Name;
+    private string Description;
+    private string RegularExpression;
+    private List<string> MultiSelectValues = new();
+}

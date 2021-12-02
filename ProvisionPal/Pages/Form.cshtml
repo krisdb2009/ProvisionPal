@@ -1,6 +1,58 @@
 ﻿@page "/Form/{FormID:GUID}"
+@inject Services.Database DB
 @model ProvisionPal.Pages.FormModel
+@using System.Data.SqlClient
 @{
+    DB.Connection.Open();
+    SqlCommand cmd = DB.Connection.CreateCommand();
+    cmd.Parameters.AddWithValue("@FORMID@", Request.RouteValues["FormID"]);
+    cmd.CommandText = "SELECT Name, Description FROM Forms WHERE FormID = @FORMID@";
+    SqlDataReader reader = cmd.ExecuteReader();
+    reader.Read();
+    ViewData["Title"] = reader.GetString(0);
+    string Description = reader.GetString(1);
+    reader.Close();
+    cmd.CommandText = "SELECT ParameterID FROM FormXRefParameters WHERE FormID = @FORMID@ ORDER BY [Order] ASC";
+    List<Guid> paramIDs = new();
+    reader = cmd.ExecuteReader();
+    while(reader.Read()) paramIDs.Add(reader.GetGuid(0));
+    DB.Connection.Close();
 }
 
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="py-5 text-center">
+            <h2>@ViewData["Title"]</h2>
+            <p class="lead">@Description</p>
+        </div>
+    </div>
+    <div class="row justify-content-center">
+        <form class="col-lg-8" method="post">
+            <div class="row">
+                <h4 class="p-2">Parameters</h4>
+            </div>
+            <div class="row">
+                @foreach(Guid paramID in paramIDs)
+                {
+                    <div class="col-md-6 p-2">
+                        <component
+                            type="typeof(Shared.Components.SQL.Parameter)"
+                            render-mode="Static"
+                            param-ParameterID="paramID"
+                        />
+                    </div>
+                }
+            </div>
+            
+            <div class="row">
+                <h4 class="p-2">Permissions</h4>
+            </div>
 
+            <div class="row">
+                <div class="col p-2">
+                    <button class="w-100 btn btn-primary btn-lg" type="submit">Submit</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
