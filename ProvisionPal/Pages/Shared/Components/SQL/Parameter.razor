@@ -12,7 +12,7 @@
     Description = reader.GetString(1);
     if (!reader.IsDBNull(2)) RegularExpression = reader.GetString(2);
     reader.Close();
-    cmd.CommandText = "SELECT Value FROM ParameterXRefMultiSelect WHERE ParameterID = @PARAMID@";
+    cmd.CommandText = "SELECT Value FROM ParameterXRefMultiSelect WHERE ParameterID = @PARAMID@ ORDER BY Value ASC";
     reader = cmd.ExecuteReader();
     while (reader.Read()) MultiSelectValues.Add(reader.GetString(0));
     DB.Connection.Close();
@@ -30,7 +30,7 @@ else
     }
     else
     {
-        <TextInput Name="@ParameterID.ToString()" Label="@Name" Description="@Description" Value="@Value"></TextInput>
+        <TextInput Name="@ParameterID.ToString()" Label="@Name" Description="@Description" Value="@Value" RegularExpression="@RegularExpression"></TextInput>
     }
 }
 

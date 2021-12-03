@@ -1,5 +1,20 @@
-﻿<div class="input-group">
-    <input type="text" class="form-control" placeholder="@Label" name="@Name" value="@Value">
+﻿<div class="form-floating">
+    <input 
+        id="@Name"
+        type="text"
+        class="form-control"
+        name="@Name"
+        placeholder="@Label"
+        value="@Value"
+        data-bs-toggle="popover"
+        data-bs-trigger="focus"
+        title="@Label"
+        data-bs-content="@Description"
+        data-bs-placement="top"
+        autocomplete="off"
+        pattern="@RegularExpression"
+    >
+    <label for="@Name">@Label</label>
 </div>
 
 @code {

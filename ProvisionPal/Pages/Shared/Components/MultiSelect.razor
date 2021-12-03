@@ -1,10 +1,22 @@
-﻿<select name="@Name" class="form-select">
-    <option value="">Select a @Label</option>
-    @foreach(string value in Values)
-    {
-        <option value="@value">@value</option>
-    }
-</select>
+﻿<div class="form-floating">
+    <select 
+        id="@Name"
+        name="@Name"
+        class="form-select"
+        data-bs-toggle="popover"
+        data-bs-trigger="focus"
+        title="@Label"
+        data-bs-content="@Description"
+        data-bs-placement="top"
+    >
+        <option selected>Select an option</option>
+        @foreach(string value in Values)
+        {
+            <option value="@value">@value</option>
+        }
+    </select>
+    <label for="@Name">@Label</label>
+</div>
 
 @code {
     [Parameter]
