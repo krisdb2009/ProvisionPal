@@ -1,5 +1,19 @@
-﻿<div class="form-check">
-    <input type="checkbox" class="form-check-input" id="@Name" name="@Name">
+﻿<div 
+    class="form-check form-switch"
+    data-bs-toggle="popover"
+    data-bs-trigger="focus hover        "
+    title="@Label"
+    data-bs-content="@Description"
+    data-bs-placement="top"
+    style="display:inline-block;"
+>
+    <input
+        type="checkbox"
+        role="switch"
+        class="form-check-input"
+        id="@Name"
+        name="@Name"
+    >
     <label class="form-check-label" for="@Name">@Label</label>
 </div>
 

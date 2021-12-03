@@ -15,7 +15,12 @@
     cmd.CommandText = "SELECT ParameterID FROM FormXRefParameters WHERE FormID = @FORMID@ ORDER BY [Order] ASC";
     List<Guid> paramIDs = new();
     reader = cmd.ExecuteReader();
-    while(reader.Read()) paramIDs.Add(reader.GetGuid(0));
+    while (reader.Read()) paramIDs.Add(reader.GetGuid(0));
+    reader.Close();
+    cmd.CommandText = "SELECT ScriptGroupID FROM ScriptGroups WHERE ScriptGroupID IN (SELECT ScriptGroupID FROM FormXRefScriptGroups WHERE FormID = @FORMID@) ORDER BY Name ASC";
+    reader = cmd.ExecuteReader();
+    List<Guid> sgIDs = new();
+    while (reader.Read()) sgIDs.Add(reader.GetGuid(0));
     DB.Connection.Close();
 }
 
@@ -48,7 +53,18 @@
                 <h4 class="p-2">Permissions</h4>
             </div>
 
-
+            <div class="row">
+                @foreach(Guid sgID in sgIDs)
+                {
+                    <div class="col-md-6 p-2">
+                        <component
+                            type="typeof(Shared.Components.SQL.Permission)"
+                            render-mode="Static"
+                            param-ScriptGroupID="sgID"
+                        />
+                    </div>
+                }
+            </div>
 
             <div class="row">
                 <div class="col p-2">

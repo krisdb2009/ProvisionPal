@@ -20,17 +20,17 @@
 
 @if(RegularExpression == "[0|1]")
 {
-    <CheckBox Name="@ParameterID.ToString()" Label="@Name" Description="@Description" Value="@Value"></CheckBox>
+    <CheckBox Name='@("PARAM-" + ParameterID.ToString())' Label="@Name" Description="@Description" Value="@Value"></CheckBox>
 }
 else 
 {
     @if(MultiSelectValues.Count != 0)
     {
-        <MultiSelect Name="@ParameterID.ToString()" Label="@Name" Description="@Description" Value="@Value" Values="MultiSelectValues.ToArray()"></MultiSelect>
+        <MultiSelect Name='@("PARAM-" + ParameterID.ToString())' Label="@Name" Description="@Description" Value="@Value" Values="MultiSelectValues.ToArray()"></MultiSelect>
     }
     else
     {
-        <TextInput Name="@ParameterID.ToString()" Label="@Name" Description="@Description" Value="@Value" RegularExpression="@RegularExpression"></TextInput>
+        <TextInput Name='@("PARAM-" + ParameterID.ToString())' Label="@Name" Description="@Description" Value="@Value" RegularExpression="@RegularExpression"></TextInput>
     }
 }
 

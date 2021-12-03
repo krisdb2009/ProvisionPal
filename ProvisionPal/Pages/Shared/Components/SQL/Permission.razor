@@ -1,0 +1,25 @@
+﻿@using System.Data.SqlClient
+@inject Services.Database DB
+
+@{
+    DB.Connection.Open();
+    SqlCommand cmd = DB.Connection.CreateCommand();
+    cmd.Parameters.AddWithValue("@SGID@", ScriptGroupID);
+    cmd.CommandText = "SELECT Name, Description FROM ScriptGroups WHERE ScriptGroupID = @SGID@";
+    SqlDataReader reader =  cmd.ExecuteReader();
+    reader.Read();
+    Name = reader.GetString(0);
+    Description = reader.GetString(1);
+    DB.Connection.Close();
+}
+
+<CheckBox Name='@("PERM-" + ScriptGroupID.ToString())' Label="@Name" Description="@Description" Value="@Value"></CheckBox>
+
+@code {
+    [Parameter]
+    public Guid ScriptGroupID { get; set; }
+    [Parameter]
+    public string Value { get; set; }
+    private string Name;
+    private string Description;
+}
