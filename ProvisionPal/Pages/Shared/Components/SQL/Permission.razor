@@ -11,9 +11,16 @@
     Name = reader.GetString(0);
     Description = reader.GetString(1);
     DB.Connection.Close();
+    string name = "PERM-" + ScriptGroupID.ToString();
 }
 
-<CheckBox Name='@("PERM-" + ScriptGroupID.ToString())' Label="@Name" Description="@Description" Value="@Value"></CheckBox>
+<label for="@name" class="list-group-item list-group-item-action p-3 user-select-none" aria-current="true">
+    <div class="d-flex w-100">
+        <CheckBox Name="@name" Value="@Value"></CheckBox>
+        <h5 class="mb-1">@Name</h5>
+    </div>
+    <p class="mb-1">@Description</p>
+</label>
 
 @code {
     [Parameter]

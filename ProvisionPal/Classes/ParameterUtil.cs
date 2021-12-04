@@ -12,9 +12,10 @@ namespace ProvisionPal.Classes
             SqlCommand cmd = DB.Connection.CreateCommand();
             cmd.Parameters.AddWithValue("@PARAMID@", Parameter);
             cmd.CommandText = "SELECT RegularExpression FROM Parameters WHERE ParameterID = @PARAMID@";
-            string regex = (string)cmd.ExecuteScalar();
+            object regex = cmd.ExecuteScalar();
             DB.Connection.Close();
-            return Regex.IsMatch(regex, ValueToValidate);
+            if (regex.GetType() == typeof(DBNull)) return true;
+            return Regex.Match(ValueToValidate, (string)regex).Value == ValueToValidate;
         }
     }
 }
