@@ -137,4 +137,7 @@
     <Build Include="dbo\Tables\RequestXRefScriptGroups.sql" />
     <Build Include="dbo\Tables\ScriptGroupXRefScripts.sql" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="Database.publish.xml" />
+  </ItemGroup>
 </Project>
