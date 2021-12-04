@@ -2,6 +2,8 @@
 @inject Services.Database DB
 @model ProvisionPal.Pages.FormModel
 @using System.Data.SqlClient
+@using Microsoft.Extensions.Primitives
+
 @{
     DB.Connection.Open();
     SqlCommand cmd = DB.Connection.CreateCommand();
@@ -22,6 +24,25 @@
     List<Guid> sgIDs = new();
     while (reader.Read()) sgIDs.Add(reader.GetGuid(0));
     DB.Connection.Close();
+
+    Dictionary<Guid, string> requestValues = new();
+
+    if (Request.Method == "POST")
+    {
+        foreach (KeyValuePair<string, StringValues> kvp in Request.Form)
+        {
+            if (kvp.Key.StartsWith("PARAM-"))
+            {
+                string paramID = kvp.Key.Replace("PARAM-", "");
+                requestValues.Add(Guid.Parse(paramID), kvp.Value[0]);
+            }
+            if (kvp.Key.StartsWith("PERM-"))
+            {
+                string permID = kvp.Key.Replace("PERM-", "");
+                requestValues.Add(Guid.Parse(permID), kvp.Value[0]);
+            }
+        }
+    }
 }
 
 <div class="container">
@@ -39,11 +60,14 @@
             <div class="row">
                 @foreach(Guid paramID in paramIDs)
                 {
+                    string val = null;
+                    requestValues.TryGetValue(paramID, out val);
                     <div class="col-md-6 p-2">
                         <component
                             type="typeof(Shared.Components.SQL.Parameter)"
                             render-mode="Static"
                             param-ParameterID="paramID"
+                            param-Value="val"
                         />
                     </div>
                 }
@@ -56,11 +80,14 @@
             <div class="row">
                 @foreach(Guid sgID in sgIDs)
                 {
+                    string val = null;
+                    requestValues.TryGetValue(sgID, out val);
                     <div class="col-md-6 p-2">
                         <component
                             type="typeof(Shared.Components.SQL.Permission)"
                             render-mode="Static"
                             param-ScriptGroupID="sgID"
+                            param-Value="val"
                         />
                     </div>
                 }
