@@ -1,8 +1,20 @@
-﻿<div class="form-floating">
+﻿@{
+    string cls = "form-control";
+    if (Value != null)
+    {
+        cls += " is-valid";
+    }
+    if (Value == "INVALID") {
+        Value = "";
+        cls += " is-invalid"; 
+    }
+}
+
+<div class="form-floating">
     <input 
         id="@Name"
         type="text"
-        class="form-control"
+        class="@cls"
         name="@Name"
         placeholder="@Label"
         value="@Value"

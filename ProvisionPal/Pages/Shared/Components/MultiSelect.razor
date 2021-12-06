@@ -1,8 +1,20 @@
-﻿<div class="form-floating">
+﻿@{
+    string cls = "form-select";
+    if (Value != null)
+    {
+        cls += " is-valid";
+    }
+    if (Value == "INVALID") {
+        Value = "";
+        cls += " is-invalid"; 
+    }
+}
+
+<div class="form-floating">
     <select 
         id="@Name"
         name="@Name"
-        class="form-select"
+        class="@cls"
         data-bs-toggle="popover"
         data-bs-trigger="focus"
         title="@Label"

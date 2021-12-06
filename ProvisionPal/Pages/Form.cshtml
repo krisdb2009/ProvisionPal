@@ -26,20 +26,34 @@
     while (reader.Read()) sgIDs.Add(reader.GetGuid(0));
     DB.Connection.Close();
 
-    Dictionary<Guid, string> requestValues = new();
+    Dictionary<Guid, string> parameters = new();
+    Dictionary<Guid, string> permissions = new();
 
+    bool allValid = true;
     if (Request.Method == "POST")
     {
         foreach (KeyValuePair<string, StringValues> kvp in Request.Form)
         {
             if (kvp.Key.StartsWith("PARAM-") && Guid.TryParse(kvp.Key.Replace("PARAM-", ""), out Guid paramid))
             {
-                if (ParameterUtil.Validate(DB, paramid, kvp.Value[0])) requestValues.Add(paramid, kvp.Value[0]);
+                if (ParameterUtil.Validate(DB, paramid, kvp.Value[0]))
+                {
+                    parameters.Add(paramid, kvp.Value[0]);
+                }
+                else
+                {
+                    allValid = false;
+                    parameters.Add(paramid, "INVALID");
+                }
             }
             if (kvp.Key.StartsWith("PERM-") && Guid.TryParse(kvp.Key.Replace("PERM-", ""), out Guid permid))
             {
-                requestValues.Add(permid, kvp.Value[0]);
+                permissions.Add(permid, kvp.Value[0]);
             }
+        }
+        if (allValid)
+        {
+            FormUtil.Submit(DB, Guid.NewGuid(), User, parameters, permissions);
         }
     }
 }
@@ -47,34 +61,35 @@
 <div class="container">
     <div class="row justify-content-center">
         <div class="py-5 text-center">
+            <i class="bi bi-file-text fs-1 text-primary"></i>
             <h2>@ViewData["Title"]</h2>
             <p class="lead">@Description</p>
         </div>
     </div>
     <div class="row justify-content-center">
-        <form class="col-lg-8" method="post">
+        <form id="mainForm" class="col-lg-8" method="post">
             <div class="modal fade" id="permsModal" tabindex="-1" aria-labelledby="permsModalLbl" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="permsModalLbl">Select permissions</h5>
+                            <h5 class="modal-title" id="permsModalLbl">
+                                <i class="bi bi-ui-checks"></i>
+                                <span>Select permissions</span>
+                            </h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-header">
                             <div class="input-group w-100">
                                 <span class="input-group-text"><i class="bi bi-filter"></i></span>
-                                <input type="text" class="form-control" placeholder="Filter" aria-label="Filter">
+                                <input id="permsFilter" type="text" class="form-control" placeholder="Filter" aria-label="Filter">
                             </div>
                         </div>
-                        <div class="modal-body">
-                            
-                            <div class="list-group">
-
-                                @for(int i = 0; i < 10; i++) {
+                        <div class="modal-body p-0">
+                            <div class="list-group list-group-flush" id="permsList">
                                 @foreach(Guid sgID in sgIDs)
                                 {
                                     string val = null;
-                                    requestValues.TryGetValue(sgID, out val);
+                                    permissions.TryGetValue(sgID, out val);
                                     <component
                                         type="typeof(Shared.Components.SQL.Permission)"
                                         render-mode="Static"
@@ -82,21 +97,45 @@
                                         param-Value="val"
                                     />
                                 }
-                                }
-        
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            @if(HttpContext.Request.Method == "POST")
+            {
+                if (allValid)
+                {
+                    <div class="alert alert-success" role="alert">
+                        <i class="bi bi-emoji-sunglasses fs-4 align-middle me-2"></i>
+                        <span class="align-middle">
+                            <b>This form has been submitted!</b>
+                            <i>If a mistake was made, please correct it below and re-submit the form.</i>
+                        </span>
+                    </div>
+                }
+                else
+                {
+                    <div class="alert alert-danger" role="alert">
+                        <i class="bi bi-exclamation-circle fs-4 align-middle me-2"></i>
+                        <span class="align-middle">
+                            <b>Un-expected input: </b>
+                            Please correct the highlighted fields below.
+                        </span>
+                    </div>
+                }
+            }
             <div class="row">
-                <h4 class="p-2">Parameters</h4>
+                <h4 class="p-2">
+                    <i class="bi bi-input-cursor-text"></i>
+                    <span>Parameters</span>
+                </h4>
             </div>
             <div class="row">
                 @foreach(Guid paramID in paramIDs)
                 {
                     string val = null;
-                    requestValues.TryGetValue(paramID, out val);
+                    parameters.TryGetValue(paramID, out val);
                     <div class="col-md-6 p-2">
                         <component
                             type="typeof(Shared.Components.SQL.Parameter)"
@@ -107,36 +146,38 @@
                     </div>
                 }
             </div>
-            
             <div class="row justify-content-between">
-                <h4 class="p-2 col-auto">Permissions</h4>
+                <h4 class="p-2 col-auto">
+                    <i class="bi bi-key"></i>
+                    <span>Permissions</span>
+                </h4>
                 <div class="p-2 col-auto">
                     <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#permsModal">
                         <i class="bi bi-node-plus"></i> Add
                     </button>
                 </div>
             </div>
-
             <div class="row">
-                <ul class="p-2 list-group">
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>A list item</span>
-                        <span role="button" class="ms-auto text-primary bi bi-x-circle" title="Remove permission."></span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>A list item</span>
-                        <span role="button" class="ms-auto text-primary bi bi-x-circle" title="Remove permission."></span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between align-items-center">
-                        <span>A list item</span>
-                        <span role="button" class="ms-auto text-primary bi bi-x-circle" title="Remove permission."></span>
-                    </li>
-                </ul>
+                <li id="permLiTemplate" class="list-group-item d-flex justify-content-between align-items-center d-none">
+                    <span>...</span>
+                    <span role="button" class="ms-auto text-primary bi bi-x-circle" title="Remove permission."></span>
+                </li>
+                <ul id="permMiniList" class="p-2 list-group d-none"></ul>
+                <div id="permMiniMessage" class="p-2">
+                    <div class="card bg-light">
+                        <div class="card-body text-center text-secondary">
+                            <i class="bi bi-exclamation-circle fs-4 align-middle m-1"></i>
+                            <span class="align-middle">No permissions selected yet, press the "Add" button above.</span>
+                        </div>
+                    </div>
+                </div>
             </div>
-
             <div class="row">
                 <div class="col p-2">
-                    <button class="w-100 btn btn-primary" type="submit">Submit</button>
+                    <button class="w-100 btn btn-outline-primary" type="submit">
+                        <i class="bi bi-check2-circle"></i>
+                        <span>Submit</span>
+                    </button>
                 </div>
             </div>
         </form>

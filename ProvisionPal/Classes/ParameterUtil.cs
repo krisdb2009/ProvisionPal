@@ -11,10 +11,32 @@ namespace ProvisionPal.Classes
             DB.Connection.Open();
             SqlCommand cmd = DB.Connection.CreateCommand();
             cmd.Parameters.AddWithValue("@PARAMID@", Parameter);
-            cmd.CommandText = "SELECT RegularExpression FROM Parameters WHERE ParameterID = @PARAMID@";
-            object regex = cmd.ExecuteScalar();
+            cmd.CommandText = "SELECT RegularExpression, Required FROM Parameters WHERE ParameterID = @PARAMID@";
+            SqlDataReader reader = cmd.ExecuteReader();
+            reader.Read();
+            string regex = "";
+            if (!reader.IsDBNull(0)) regex = reader.GetString(0);
+            bool isRequired = reader.GetBoolean(1);
+            reader.Close();
+
+            cmd.CommandText = "SELECT Value FROM ParameterXRefMultiSelect WHERE ParameterID = @PARAMID@";
+            reader = cmd.ExecuteReader();
+            List<string> MultiSelectVals = new();
+            while (reader.Read()) MultiSelectVals.Add(reader.GetString(0));
             DB.Connection.Close();
-            if (regex.GetType() == typeof(DBNull)) return true;
+            if (isRequired && ValueToValidate == "") return false;
+            if (MultiSelectVals.Count > 0)
+            {
+                if (MultiSelectVals.Contains(ValueToValidate))
+                {
+                    return true;
+                }
+                else
+                {
+                    return false;
+                }
+            }
+            if (regex == "") return true;
             return Regex.Match(ValueToValidate, (string)regex).Value == ValueToValidate;
         }
     }
