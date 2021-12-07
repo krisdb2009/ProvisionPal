@@ -11,7 +11,7 @@
     "ProvisionPal": {
       "commandName": "Project",
       "launchBrowser": true,
-      "launchUrl": "Forms",
+      "launchUrl": "Admin/Requests",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       },
