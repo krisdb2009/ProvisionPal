@@ -1,4 +1,4 @@
-﻿@page "/Form/{FormID:GUID}"
+﻿@page
 @inject Services.Database DB
 @model ProvisionPal.Pages.FormModel
 @using System.Data.SqlClient
@@ -6,9 +6,12 @@
 @using ProvisionPal.Classes
 
 @{
+    Guid FormID = Guid.Parse((string)Request.RouteValues["FormID"]);
+    Guid RequestID = Guid.Empty;
+    if (Request.RouteValues["RequestID"] != null) RequestID = Guid.Parse((string)Request.RouteValues["RequestID"]);
     DB.Connection.Open();
     SqlCommand cmd = DB.Connection.CreateCommand();
-    cmd.Parameters.AddWithValue("@FORMID@", Request.RouteValues["FormID"]);
+    cmd.Parameters.AddWithValue("@FORMID@", FormID);
     cmd.CommandText = "SELECT Name, Description FROM Forms WHERE FormID = @FORMID@";
     SqlDataReader reader = cmd.ExecuteReader();
     reader.Read();
@@ -53,7 +56,16 @@
         }
         if (allValid)
         {
-            FormUtil.Submit(DB, Guid.NewGuid(), User, parameters, permissions);
+            if (RequestID == Guid.Empty) RequestID = Guid.NewGuid();
+            FormUtil.Submit(DB, RequestID, FormID, User, parameters, permissions);
+            Response.Redirect("/Form/" + FormID + "/" + RequestID.ToString());
+        }
+    }
+    else
+    {
+        if (RequestID != Guid.Empty)
+        {
+            FormUtil.Read(DB, RequestID, out parameters, out permissions);
         }
     }
 }

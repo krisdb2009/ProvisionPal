@@ -7,14 +7,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAuthentication(NegotiateDefaults.AuthenticationScheme)
    .AddNegotiate();
 
-builder.Services.AddAuthorization(options =>
-{
+builder.Services.AddAuthorization(options => {
     // By default, all incoming requests will be authorized according to the default policy.
     options.FallbackPolicy = options.DefaultPolicy;
 });
 builder.Services.AddRazorPages();
 
 builder.Services.AddSingleton<ProvisionPal.Services.Database>();
+
+builder.Services.AddMvc().AddRazorPagesOptions(options => {
+    options.Conventions.AddPageRoute("/Form", "/Request/{RequestID:GUID}");
+    options.Conventions.AddPageRoute("/Form", "/Form/{FormID:GUID}");
+});
 
 var app = builder.Build();
 

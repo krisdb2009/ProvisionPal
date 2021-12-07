@@ -10,6 +10,7 @@ namespace ProvisionPal.Classes
         public static void Submit(
             Database DB,
             Guid RequestID,
+            Guid FormID,
             IPrincipal Author,
             Dictionary<Guid, string> Parameters,
             Dictionary<Guid, string> ScriptGroups
@@ -17,6 +18,7 @@ namespace ProvisionPal.Classes
             DB.Connection.Open();
             SqlCommand cmd = DB.Connection.CreateCommand();
             cmd.Parameters.AddWithValue("@REQID@", RequestID);
+            cmd.Parameters.AddWithValue("@FRMID@", FormID);
             cmd.Parameters.AddWithValue("@AUTHOR@", Author.Identity?.Name);
             cmd.CommandText = "SELECT RequestID FROM Requests WHERE RequestID = @REQID@";
             SqlDataReader reader = cmd.ExecuteReader();
@@ -29,7 +31,7 @@ namespace ProvisionPal.Classes
             else
             {
                 reader.Close();
-                cmd.CommandText = "INSERT INTO Requests (RequestID, RequestedBy, LastModifiedBy, RequestedTime) VALUES (@REQID@, @AUTHOR@, @AUTHOR@, SYSDATETIME())";
+                cmd.CommandText = "INSERT INTO Requests (RequestID, FormID, RequestedBy, LastModifiedBy, RequestedTime) VALUES (@REQID@, @FRMID@, @AUTHOR@, @AUTHOR@, SYSDATETIME())";
                 cmd.ExecuteNonQuery();
             }
             cmd.CommandText = "DELETE FROM RequestXRefParameters WHERE RequestID = @REQID@";
@@ -52,6 +54,22 @@ namespace ProvisionPal.Classes
                 cmd.CommandText = "INSERT INTO RequestXRefScriptGroups (RequestID, ScriptGroupID) VALUES (@REQID@, @KEY@)";
                 cmd.ExecuteNonQuery();
             }
+            DB.Connection.Close();
+        }
+        public static void Read(Database DB, Guid RequestID, out Dictionary<Guid, string> Parameters, out Dictionary<Guid, string> ScriptGroups)
+        {
+            Parameters = new();
+            ScriptGroups = new();
+            DB.Connection.Open();
+            SqlCommand cmd = DB.Connection.CreateCommand();
+            cmd.Parameters.AddWithValue("@REQID@", RequestID);
+            cmd.CommandText = "SELECT ParameterID, Value FROM RequestXRefParameters WHERE RequestID = @REQID@";
+            SqlDataReader reader = cmd.ExecuteReader();
+            while (reader.Read()) Parameters.Add(reader.GetGuid(0), reader.GetString(1));
+            reader.Close();
+            cmd.CommandText = "SELECT ScriptGroupID FROM RequestXRefScriptGroups WHERE RequestID = @REQID@";
+            reader = cmd.ExecuteReader();
+            while (reader.Read()) ScriptGroups.Add(reader.GetGuid(0), "on");
             DB.Connection.Close();
         }
     }
