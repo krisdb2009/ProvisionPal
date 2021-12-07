@@ -8,36 +8,57 @@
 @{
     Guid FormID = Guid.Empty;
     Guid RequestID = Guid.Empty;
+    string Description;
+    Dictionary<Guid, string> Parameters = new();
+    Dictionary<Guid, string> Permissions = new();
+    List<Guid> ParamIDs = new();
+    List<Guid> SgIDs = new();
+    bool AllValid = true;
     if (Request.RouteValues["FormID"] != null) FormID = Guid.Parse((string)Request.RouteValues["FormID"]);
     if (Request.RouteValues["RequestID"] != null) RequestID = Guid.Parse((string)Request.RouteValues["RequestID"]);
-    DB.Connection.Open();
-    SqlCommand cmd = DB.Connection.CreateCommand();
-    cmd.Parameters.AddWithValue("@REQID@", RequestID);
-    if (RequestID != Guid.Empty)
+    try
     {
-        cmd.CommandText = "SELECT FormID FROM Requests WHERE RequestID = @REQID@";
-        FormID = (Guid)cmd.ExecuteScalar();
+        DB.Connection.Open();
+        SqlCommand cmd = DB.Connection.CreateCommand();
+        cmd.Parameters.AddWithValue("@REQID@", RequestID);
+        if (RequestID != Guid.Empty)
+        {
+            cmd.CommandText = "SELECT FormID FROM Requests WHERE RequestID = @REQID@";
+            object val = cmd.ExecuteScalar();
+            if (val == null)
+            {
+                Response.Redirect("/Error/RequestNotFound");
+                return;
+            }
+            else
+            {
+                FormID = (Guid)val;
+            }
+        }
+        cmd.Parameters.AddWithValue("@FORMID@", FormID);
+        cmd.CommandText = "SELECT Name, Description FROM Forms WHERE FormID = @FORMID@";
+        SqlDataReader reader = cmd.ExecuteReader();
+        if (!reader.HasRows)
+        {
+            Response.Redirect("/Error/FormNotFound");
+            return;
+        }
+        reader.Read();
+        ViewData["Title"] = reader.GetString(0);
+        Description = reader.GetString(1);
+        reader.Close();
+        cmd.CommandText = "SELECT ParameterID FROM FormXRefParameters WHERE FormID = @FORMID@ ORDER BY [Order] ASC";
+        reader = cmd.ExecuteReader();
+        while (reader.Read()) ParamIDs.Add(reader.GetGuid(0));
+        reader.Close();
+        cmd.CommandText = "SELECT ScriptGroupID FROM ScriptGroups WHERE ScriptGroupID IN (SELECT ScriptGroupID FROM FormXRefScriptGroups WHERE FormID = @FORMID@) ORDER BY Name ASC";
+        reader = cmd.ExecuteReader();
+        while (reader.Read()) SgIDs.Add(reader.GetGuid(0));
     }
-    cmd.Parameters.AddWithValue("@FORMID@", FormID);
-    cmd.CommandText = "SELECT Name, Description FROM Forms WHERE FormID = @FORMID@";
-    SqlDataReader reader = cmd.ExecuteReader();
-    reader.Read();
-    ViewData["Title"] = reader.GetString(0);
-    string Description = reader.GetString(1);
-    reader.Close();
-    cmd.CommandText = "SELECT ParameterID FROM FormXRefParameters WHERE FormID = @FORMID@ ORDER BY [Order] ASC";
-    List<Guid> paramIDs = new();
-    reader = cmd.ExecuteReader();
-    while (reader.Read()) paramIDs.Add(reader.GetGuid(0));
-    reader.Close();
-    cmd.CommandText = "SELECT ScriptGroupID FROM ScriptGroups WHERE ScriptGroupID IN (SELECT ScriptGroupID FROM FormXRefScriptGroups WHERE FormID = @FORMID@) ORDER BY Name ASC";
-    reader = cmd.ExecuteReader();
-    List<Guid> sgIDs = new();
-    while (reader.Read()) sgIDs.Add(reader.GetGuid(0));
-    DB.Connection.Close();
-    Dictionary<Guid, string> parameters = new();
-    Dictionary<Guid, string> permissions = new();
-    bool allValid = true;
+    finally
+    {
+        DB.Connection.Close();
+    }
     if (Request.Method == "POST")
     {
         foreach (KeyValuePair<string, StringValues> kvp in Request.Form)
@@ -46,23 +67,23 @@
             {
                 if (ParameterUtil.Validate(DB, paramid, kvp.Value[0]))
                 {
-                    parameters.Add(paramid, kvp.Value[0]);
+                    Parameters.Add(paramid, kvp.Value[0]);
                 }
                 else
                 {
-                    allValid = false;
-                    parameters.Add(paramid, "INVALID");
+                    AllValid = false;
+                    Parameters.Add(paramid, "INVALID");
                 }
             }
             if (kvp.Key.StartsWith("PERM-") && Guid.TryParse(kvp.Key.Replace("PERM-", ""), out Guid permid))
             {
-                permissions.Add(permid, kvp.Value[0]);
+                Permissions.Add(permid, kvp.Value[0]);
             }
         }
-        if (allValid)
+        if (AllValid)
         {
             if (RequestID == Guid.Empty) RequestID = Guid.NewGuid();
-            FormUtil.Submit(DB, RequestID, FormID, User, parameters, permissions);
+            FormUtil.Submit(DB, RequestID, FormID, User, Parameters, Permissions);
             Response.Redirect("/Request/" + RequestID.ToString());
         }
     }
@@ -70,7 +91,7 @@
     {
         if (RequestID != Guid.Empty)
         {
-            FormUtil.Read(DB, RequestID, out parameters, out permissions);
+            FormUtil.Read(DB, RequestID, out Parameters, out Permissions);
         }
     }
 }
@@ -103,10 +124,10 @@
                         </div>
                         <div class="modal-body p-0">
                             <div class="list-group list-group-flush" id="permsList">
-                                @foreach(Guid sgID in sgIDs)
+                                @foreach(Guid sgID in SgIDs)
                                 {
                                     string val = null;
-                                    permissions.TryGetValue(sgID, out val);
+                                    Permissions.TryGetValue(sgID, out val);
                                     <component
                                         type="typeof(Shared.Components.SQL.Permission)"
                                         render-mode="Static"
@@ -121,7 +142,7 @@
             </div>
             @if(HttpContext.Request.Method == "POST")
             {
-                if (allValid)
+                if (AllValid)
                 {
                     <div class="alert alert-success" role="alert">
                         <i class="bi bi-emoji-sunglasses fs-4 align-middle me-2"></i>
@@ -149,10 +170,10 @@
                 </h4>
             </div>
             <div class="row">
-                @foreach(Guid paramID in paramIDs)
+                @foreach(Guid paramID in ParamIDs)
                 {
                     string val = null;
-                    parameters.TryGetValue(paramID, out val);
+                    Parameters.TryGetValue(paramID, out val);
                     <div class="col-md-6 p-2">
                         <component
                             type="typeof(Shared.Components.SQL.Parameter)"
