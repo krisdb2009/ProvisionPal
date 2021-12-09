@@ -1,31 +1,52 @@
 ﻿@page
-@model ProvisionPal.Pages.Admin.RequestsModel
-@{
-}
+@model RequestsModel
 
+<div class="container p-0">
 
-
-
-<ol class="list-group list-group-numbered">
-  <li class="list-group-item d-flex justify-content-between align-items-start">
-    <div class="ms-2 me-auto">
-      <div class="fw-bold">Subheading</div>
-      Content for list item
+    <div class="row">
+        <h2 class="input-group mb-3 col fw-lighter">Form Requests</h2>
+        <div class="col-auto">
+            <component 
+                type="typeof(Shared.Components.Pagination)"
+                render-mode="Static"
+            />
+        </div>
     </div>
-    <span class="badge bg-primary rounded-pill">14</span>
-  </li>
-  <li class="list-group-item d-flex justify-content-between align-items-start">
-    <div class="ms-2 me-auto">
-      <div class="fw-bold">Subheading</div>
-      Content for list item
+
+    <div class="card row g-0 mb-3">
+        <div class="row card-body align-items-center">
+            <div class="col-auto"><i class="bi bi-filter-circle"></i></div>
+            <div class="col">
+                <span class="badge rounded-pill bg-secondary">First Name</span>
+            </div>
+        </div>
     </div>
-    <span class="badge bg-primary rounded-pill">14</span>
-  </li>
-  <li class="list-group-item d-flex justify-content-between align-items-start">
-    <div class="ms-2 me-auto">
-      <div class="fw-bold">Subheading</div>
-      Content for list item
+
+    <div class="row list-group g-0">
+        @foreach(RequestsModel.RequestDetails details in Model.Requests)
+        {
+            <a href='@("/Request/" + details.RequestID)' class="list-group-item list-group-item-action">
+                <div class="row align-items-center">
+                    <div class="col-auto"><i class="bi bi-box-arrow-up-right"></i></div>
+                    <div class="col">
+                        <div class="row">
+                            <h6 class="col">@details.SourceFormName</h6>
+                            <div class="col-auto"><span class="badge bg-primary rounded-pill">@details.Status</span></div>
+                        </div>
+                        <div class="row">
+                            <small class="col">
+                                <b>From:</b> @details.CreatedBy &bull;
+                                <b>At:</b> @details.Created
+                                @foreach(KeyValuePair<string, string> kv in details.CaptionParameters)
+                                {
+                                    <b>&bull; @kv.Key:</b> @kv.Value
+                                }
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </a>
+        }
     </div>
-    <span class="badge bg-primary rounded-pill">14</span>
-  </li>
-</ol>
+
+</div>

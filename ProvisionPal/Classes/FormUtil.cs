@@ -25,7 +25,7 @@ namespace ProvisionPal.Classes
             if (reader.HasRows)
             {
                 reader.Close();
-                cmd.CommandText = "UPDATE Requests SET LastModifiedBy = @AUTHOR@, LastModifiedTime = SYSDATETIME(), Status = 'Modified'";
+                cmd.CommandText = "UPDATE Requests SET LastModifiedBy = @AUTHOR@, LastModifiedTime = SYSDATETIME(), Status = 'Modified' WHERE RequestID = @REQID@";
                 cmd.ExecuteNonQuery();
             }
             else
