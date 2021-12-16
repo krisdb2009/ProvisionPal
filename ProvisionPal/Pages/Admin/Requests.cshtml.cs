@@ -8,6 +8,7 @@ namespace ProvisionPal.Pages.Admin
         public List<RequestDetails> Requests = new();
         public List<SearchTerm> SearchTerms = new()
         {
+            new() { CustomParameter = false, Name = "SourceFormName", DisplayName = "Form Type" },
             new() { CustomParameter = false, Name = "RequestedBy", DisplayName = "From" },
             new() { CustomParameter = false, Name = "Status", DisplayName = "Status" }
         };
@@ -25,27 +26,64 @@ namespace ProvisionPal.Pages.Admin
         public class SearchTerm
         {
             public bool CustomParameter;
+            public Order OrderBy;
             public string Name;
             public string DisplayName;
             public string Value;
+        }
+        public enum Order
+        {
+            None,
+            Ascending,
+            Descending
         }
         public void OnGet(Services.Database DB)
         {
             DB.Connection.Open();
             SqlCommand cmd = DB.Connection.CreateCommand();
+
+            cmd.CommandText = 
+            "SELECT DISTINCT " +
+            "[Parameters].ParameterID, " +
+            "[Parameters].Name " +
+            "FROM FormXRefParameters " +
+            "INNER JOIN [Parameters] " +
+            "ON ([Parameters].ParameterID = [FormXRefParameters].ParameterID) " +
+            "WHERE Caption = 1 " +
+            "ORDER BY Name ASC";
+
+            SqlDataReader reader = cmd.ExecuteReader();
+
+            while (reader.Read()) SearchTerms.Add(new() {
+                CustomParameter = true,
+                Name = reader.GetGuid(0).ToString(),
+                DisplayName = reader.GetString(1)
+            });
+
+            reader.Close();
             
+            foreach (SearchTerm term in SearchTerms)
+            {
+                if (!Request.Query.ContainsKey(term.Name)) continue;
+                term.Value = Request.Query[term.Name];
+            }
             
             cmd.CommandText = 
-            "SELECT " +
-            "RequestID, " +
+            "SELECT DISTINCT " +
+            "Requests.RequestID, " +
             "(SELECT [Name] FROM Forms WHERE Forms.FormID = Requests.FormID) AS SourceFormName, " +
             "RequestedBy, " +
             "RequestedTime, " +
             "LastModifiedBy, " +
             "LastModifiedTime, " +
             "[Status] " +
-            "FROM Requests";
-            SqlDataReader reader = cmd.ExecuteReader();
+            "FROM Requests " +
+            "INNER JOIN RequestXRefParameters " +
+            "ON (Requests.RequestID = RequestXRefParameters.RequestID) " +
+            SearchTermBuildWhereClause() + " " +
+            "ORDER BY RequestedTime DESC";
+
+            reader = cmd.ExecuteReader();
             while(reader.Read())
             {
                 RequestDetails rd = new()
@@ -80,6 +118,11 @@ namespace ProvisionPal.Pages.Admin
                 reader.Close();
             }
             DB.Connection.Close();
+        }
+        private string SearchTermBuildWhereClause()
+        {
+            return "WHERE RequestXRefParameters.ParameterID LIKE 'd86fc203-97c6-4f62-842f-63a5373af1aa' " +
+            "AND RequestXRefParameters.Value LIKE '%Info%'";
         }
     }
 }

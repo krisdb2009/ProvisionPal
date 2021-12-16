@@ -10,7 +10,7 @@ var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
 
 var permsFilter = document.getElementById('permsFilter');
 var permsList = document.getElementById('permsList');
-permsFilter.onkeyup = function () {
+if (permsFilter != undefined) permsFilter.onkeyup = function () {
     permsList.childNodes.forEach(function (cn) {
         if (cn.innerText == undefined) return;
         if (cn.innerText.toLowerCase().includes(permsFilter.value.toLowerCase())) {
@@ -25,7 +25,7 @@ var mainForm = document.getElementById('mainForm');
 var permMiniList = document.getElementById('permMiniList');
 var permLiTemplate = document.getElementById('permLiTemplate');
 var permMiniMessage = document.getElementById('permMiniMessage');
-mainForm.onchange = function () {
+if (mainForm != undefined) mainForm.onchange = function () {
     permMiniList.innerHTML = "";
     permMiniMessage.classList.remove('d-none');
     permMiniList.classList.add('d-none');
@@ -51,4 +51,12 @@ mainForm.onchange = function () {
         permMiniList.classList.remove('d-none');
     }
 };
-mainForm.onchange();
+if (mainForm != undefined) mainForm.onchange();
+
+var requestsSearchForm = document.getElementById('requestsSearchForm');
+if (requestsSearchForm != undefined) requestsSearchForm.onsubmit = function (e) {
+    var requestsSearchInputs = requestsSearchForm.getElementsByTagName("input");
+    for (var i = 0; requestsSearchInputs.length > i; i++) {
+        if (requestsSearchInputs[i].value == '') requestsSearchInputs[i].disabled = true;
+    }
+}

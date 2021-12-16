@@ -13,16 +13,39 @@
         </div>
     </div>
 
-    <div class="card row g-0 mb-3">
+    <div class="card row g-0">
         <div class="row card-body align-items-center">
             <div class="col-auto"><i class="bi bi-filter-circle"></i></div>
             <div class="col">
-                <span class="badge rounded-pill bg-secondary">First Name</span>
+                @foreach(RequestsModel.SearchTerm term in Model.SearchTerms)
+                {
+                    if (term.Value == null)
+                    {
+                        <span role="button" class="badge rounded-pill bg-secondary" data-bs-toggle="collapse" href="#ftc-@term.Name">@term.DisplayName</span>    
+                    }
+                    else
+                    {
+                        <span role="button" class="badge rounded-pill bg-primary" data-bs-toggle="collapse" href="#ftc-@term.Name">@term.DisplayName: <i class="fw-lighter">@term.Value</i></span>
+                    }
+                }
             </div>
         </div>
     </div>
 
-    <div class="row list-group g-0">
+    <form method="get" id="requestsSearchForm">
+        @foreach(RequestsModel.SearchTerm term in Model.SearchTerms)
+        {
+            <div class="row g-0 collapse mt-3" id="ftc-@term.Name">
+                <div class="input-group">
+                    <span class="input-group-text">@term.DisplayName</span>
+                    <input name="@term.Name" type="text" class="form-control" value="@term.Value">
+                </div>
+            </div>
+        }
+        <button type="submit" hidden></button>
+    </form>
+
+    <div class="row list-group g-0 mt-3">
         @foreach(RequestsModel.RequestDetails details in Model.Requests)
         {
             <a href='@("/Request/" + details.RequestID)' class="list-group-item list-group-item-action">
