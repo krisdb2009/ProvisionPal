@@ -8,7 +8,8 @@ namespace ProvisionPal.Pages.Admin
         public List<RequestDetails> Requests = new();
         public List<SearchTerm> SearchTerms = new()
         {
-            new() { CustomParameter = false, Name = "SourceFormName", DisplayName = "Form Type" },
+            new() { CustomParameter = false, Name = "Name", DisplayName = "Type" },
+            new() { CustomParameter = false, Name = "RequestedTime", DisplayName = "At" },
             new() { CustomParameter = false, Name = "RequestedBy", DisplayName = "From" },
             new() { CustomParameter = false, Name = "Status", DisplayName = "Status" }
         };
@@ -19,8 +20,8 @@ namespace ProvisionPal.Pages.Admin
             public string CreatedBy;
             public string ModifiedBy;
             public string Status;
-            public DateTime Created;
-            public DateTime Modified;
+            public string Created;
+            public string Modified;
             public Dictionary<string, string> CaptionParameters = new();
         }
         public class SearchTerm
@@ -69,19 +70,20 @@ namespace ProvisionPal.Pages.Admin
             }
             
             cmd.CommandText = 
-            "SELECT DISTINCT " +
+            "SELECT * FROM (SELECT DISTINCT " +
             "Requests.RequestID, " +
-            "(SELECT [Name] FROM Forms WHERE Forms.FormID = Requests.FormID) AS SourceFormName, " +
-            "RequestedBy, " +
-            "RequestedTime, " +
-            "LastModifiedBy, " +
-            "LastModifiedTime, " +
-            "[Status] " +
+            "Forms.Name, " +
+            "Requests.RequestedBy, " +
+            "CONVERT(varchar, Requests.RequestedTime, 22) AS RequestedTime, " +
+            "Requests.LastModifiedBy, " +
+            "CONVERT(varchar, Requests.LastModifiedTime, 22) AS LastModifiedTime, " +
+            "[Status]" +
+            SearchTermBuildSelectClause(cmd) +
             "FROM Requests " +
-            "INNER JOIN RequestXRefParameters " +
-            "ON (Requests.RequestID = RequestXRefParameters.RequestID) " +
-            SearchTermBuildWhereClause() + " " +
-            "ORDER BY RequestedTime DESC";
+            "INNER JOIN Forms " +
+            "ON (Requests.FormID = Forms.FormID)) AS REQS " +
+            SearchTermBuildWhereClause(cmd) +
+            "ORDER BY REQS.RequestedTime DESC";
 
             reader = cmd.ExecuteReader();
             while(reader.Read())
@@ -91,9 +93,9 @@ namespace ProvisionPal.Pages.Admin
                     RequestID = reader.GetGuid(0),
                     SourceFormName = reader.GetString(1),
                     CreatedBy = reader.GetString(2),
-                    Created = reader.GetDateTime(3),
+                    Created = reader.GetString(3),
                     ModifiedBy = reader.GetString(4),
-                    Modified = reader.GetDateTime(5),
+                    Modified = reader.GetString(5),
                     Status = reader.GetString(6)
                 };
                 Requests.Add(rd);
@@ -119,10 +121,50 @@ namespace ProvisionPal.Pages.Admin
             }
             DB.Connection.Close();
         }
-        private string SearchTermBuildWhereClause()
+        private string SearchTermBuildWhereClause(SqlCommand cmd)
         {
-            return "WHERE RequestXRefParameters.ParameterID LIKE 'd86fc203-97c6-4f62-842f-63a5373af1aa' " +
-            "AND RequestXRefParameters.Value LIKE '%Info%'";
+            int index = 0;
+            List<string> conditions = new();
+            foreach (SearchTerm term in SearchTerms)
+            {
+                if (term.Value == null) continue;
+                string value = "@VALUE" + index + "@";
+                cmd.Parameters.AddWithValue(value, "%" + term.Value + "%");
+                if (term.Name == "RequestedTime")
+                {
+                    conditions.Add("(REQS.[" + term.Name + "] LIKE " + value + ")");
+                }
+                else
+                {
+                    conditions.Add("(REQS.[" + term.Name + "] LIKE " + value + ")");
+                }
+                index++;
+            }
+            if (conditions.Count > 0)
+            {
+                return "WHERE " + string.Join(" AND ", conditions) + " ";
+            }
+            else
+            {
+                return "";
+            }
+        }
+        private string SearchTermBuildSelectClause(SqlCommand cmd)
+        {
+            List<string> cols = new();
+            foreach (SearchTerm term in SearchTerms)
+            {
+                if (term.Value == null || !term.CustomParameter) continue;
+                cols.Add("(SELECT Value FROM RequestXRefParameters WHERE RequestID LIKE Requests.RequestID AND ParameterID = '" + term.Name + "') AS '" + term.Name + "'");
+            }
+            if (cols.Count > 0)
+            {
+                return ", " + string.Join(", ", cols) + " ";
+            }
+            else
+            {
+                return " ";
+            }
         }
     }
 }
