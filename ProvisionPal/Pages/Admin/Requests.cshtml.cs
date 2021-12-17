@@ -43,7 +43,6 @@ namespace ProvisionPal.Pages.Admin
         {
             DB.Connection.Open();
             SqlCommand cmd = DB.Connection.CreateCommand();
-
             cmd.CommandText = 
             "SELECT DISTINCT " +
             "[Parameters].ParameterID, " +
@@ -53,23 +52,18 @@ namespace ProvisionPal.Pages.Admin
             "ON ([Parameters].ParameterID = [FormXRefParameters].ParameterID) " +
             "WHERE Caption = 1 " +
             "ORDER BY Name ASC";
-
             SqlDataReader reader = cmd.ExecuteReader();
-
             while (reader.Read()) SearchTerms.Add(new() {
                 CustomParameter = true,
                 Name = reader.GetGuid(0).ToString(),
                 DisplayName = reader.GetString(1)
             });
-
             reader.Close();
-            
             foreach (SearchTerm term in SearchTerms)
             {
                 if (!Request.Query.ContainsKey(term.Name)) continue;
                 term.Value = Request.Query[term.Name];
             }
-            
             cmd.CommandText =
             "SELECT TOP(" + PageSize + ") * FROM (" +
             "SELECT " +
@@ -87,7 +81,6 @@ namespace ProvisionPal.Pages.Admin
             ") AS REQS " +
             SearchTermBuildWhereClause(cmd) +
             "ORDER BY REQS.RequestedTime DESC";
-
             reader = cmd.ExecuteReader();
             while(reader.Read())
             {
